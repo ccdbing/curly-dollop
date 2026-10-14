@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>毕业旅行 · 拼团规划</title>
+  <!-- 清新毕业风：柔和蓝绿 + 奶油白，圆角，手写感字体 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- 引入 Vue 3 和 ECharts -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Quicksand', sans-serif;
+    }
+
+    body {
+      background: linear-gradient(145deg, #e9f7f2 0%, #d4efe6 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 16px;
+      color: #2c4a3e;
+    }
+
+    #app {
+      width: 100%;
+      max-width: 1200px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* 卡片风格 */
+    .card {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 32px;
+      padding: 20px 18px;
+      box-shadow: 0 10px 25px -8px rgba(60, 90, 80, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      transition: all 0.2s;
+    }
+
+    .card-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+      color: #1e4a3a;
+    }
+
+    .card-title i {
+      font-size: 1.5rem;
+    }
+
+    /* 按钮 */
+    .btn {
+      background: #ffffffd9;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 40px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: #1e4a3a;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03), 0 0 0 1px #b7dfd0 inset;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: 0.15s;
+      cursor: pointer;
+      background: #ffffff;
+      border: 1px solid #b7dfd0;
+      color: #1e4a3a;
+    }
+
+    .btn-primary {
+      background: #2b7a62;
+      border: 1px solid #2b7a62;
+      color: white;
+      box-shadow: 0 6px 12px -6px rgba(43, 122, 98, 0.3);
+    }
+
+    .btn-primary:hover {
+      background: #1f5e4a;
+    }
+
+    .btn-sm {
+      padding: 6px 14px;
+      font-size: 0.8rem;
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1.5px dashed #90c2b0;
+      color: #1e4a3a;
+      box-shadow: none;
+    }
+
+    .btn-outline:hover {
+      background: #ebf9f3;
+    }
+
+    .btn:active {
+      transform: scale(0.97);
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 30px;
+      border: 1.5px solid #c7e2d8;
+      background: #ffffffd9;
+      font-size: 0.95rem;
+      outline: none;
+      transition: 0.15s;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: #2b7a62;
+      box-shadow: 0 0 0 3px rgba(43, 122, 98, 0.15);
+    }
+
+    .flex {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .flex-between {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+    }
+
+    .tag {
+      background: #d9f0e7;
+      padding: 4px 12px;
+      border-radius: 40px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #1e4a3a;
+    }
+
+    .avatar {
+      width: 32px;
+      height: 32px;
+      background: #9ed3c1;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: white;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+    }
+
+    .member-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 0;
+      border-bottom: 1px solid #d8efe6;
+    }
+
+    .chart-container {
+      width: 100%;
+      height: 200px;
+      margin-top: 12px;
+    }
+
+    .itinerary-item {
+      background: #f4fbf8;
+      border-radius: 24px;
+      padding: 16px;
+      margin-bottom: 12px;
+      border-left: 6px solid #2b7a62;
+    }
+
+    .receipt-preview {
+      max-width: 70px;
+      max-height: 70px;
+      border-radius: 12px;
+      object-fit: cover;
+      border: 2px solid white;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .message-badge {
+      background: #f9b83a;
+      color: #1e4a3a;
+      border-radius: 30px;
+      padding: 2px 8px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      margin-left: 8px;
+    }
+
+    /* 响应式 */
+    @media (max-width: 640px) {
+      body {
+        padding: 8px;
+      }
+      .card {
+        padding: 16px 14px;
+        border-radius: 28px;
+      }
+      .card-title {
+        font-size: 1.1rem;
+      }
+      .btn {
+        padding: 8px 14px;
+        font-size: 0.85rem;
+      }
+      .grid-2 {
+        gap: 12px;
+      }
+    }
+
+    /* 简单的滚动条美化 */
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #e2f0ea;
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #9ecfbc;
+      border-radius: 10px;
+    }
+
+    /* 手写风格点缀 */
+    .handwrite {
+      font-weight: 600;
+      color: #1e4a3a;
+    }
+
+    .emoji-icon {
+      font-size: 1.4rem;
+      line-height: 1;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- 全局简易账号 / 个人中心浮层 (轻量) -->
+    <div class="card" style="padding: 14px 20px;">
+      <div class="flex-between">
+        <div class="flex" style="gap: 8px;">
+          <span class="emoji-icon">🎓</span>
+          <span style="font-weight: 700; font-size: 1.2rem;">毕业旅行拼团</span>
+        </div>
+        <div class="flex">
+          <div class="flex" style="gap: 6px; background: #e3f3ed; padding: 4px 8px 4px 4px; border-radius: 50px;">
+            <div class="avatar" style="width: 28px; height: 28px; font-size: 0.8rem;">{{ currentUser.avatar }}</div>
+            <span style="font-size: 0.85rem; font-weight: 600;">{{ currentUser.name }}</span>
+          </div>
+          <button class="btn btn-sm btn-outline" @click="showProfileModal = true">
+            📬 <span v-if="unreadMessages > 0" class="message-badge">{{ unreadMessages }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 未加入团时显示创建/加入 -->
+    <div v-if="!currentGroup" class="card">
+      <div class="card-title"><span>✨ 开始拼团</span></div>
+      <div class="grid-2">
+        <div>
+          <label style="font-weight: 600; font-size: 0.9rem;">创建新团</label>
+          <input v-model="newGroupName" placeholder="例如：厦门毕业之旅" style="margin: 8px 0;" />
+          <button class="btn btn-primary" style="width: 100%;" @click="createGroup">创建拼团，生成邀请码</button>
+        </div>
+        <div>
+          <label style="font-weight: 600; font-size: 0.9rem;">通过邀请码加入</label>
+          <input v-model="joinCodeInput" placeholder="输入6位邀请码" style="margin: 8px 0;" />
+          <button class="btn" style="width: 100%;" @click="joinGroup">加入团</button>
+        </div>
+      </div>
+      <p style="margin-top: 12px; font-size: 0.8rem; color: #6a8e7f;">👥 邀请码示例：ABC123（创建后自动生成）</p>
+    </div>
+
+    <!-- 已加入团 - 主功能区 -->
+    <template v-else>
+      <!-- 团信息栏 + 成员管理(团长) -->
+      <div class="card">
+        <div class="flex-between" style="flex-wrap: wrap; gap: 8px;">
+          <div>
+            <span class="tag">邀请码 {{ currentGroup.inviteCode }}</span>
+            <h2 style="margin-top: 6px;">{{ currentGroup.name }}</h2>
+          </div>
+          <button class="btn btn-sm" @click="leaveGroup">退出当前团</button>
+        </div>
+        <div style="margin-top: 16px;">
+          <div class="flex-between">
+            <span style="font-weight: 700;">👥 团员 ({{ currentGroup.members.length }})</span>
+            <span v-if="isLeader" class="tag" style="background: #ffeac2;">团长</span>
+          </div>
+          <div style="margin-top: 8px; max-height: 180px; overflow-y: auto;">
+            <div v-for="(member, idx) in currentGroup.members" :key="member.id" class="member-item">
+              <div class="avatar">{{ member.name.charAt(0) }}</div>
+              <div style="flex:1;">
+                <div style="font-weight: 600;">{{ member.name }} <span v-if="member.id === currentUser.id" style="font-size: 0.7rem; color: #2b7a62;">(我)</span></div>
+                <div style="font-size: 0.7rem; color: #5f7e71;">加入时间 {{ member.joinTime }}</div>
+              </div>
+              <button v-if="isLeader && member.id !== currentUser.id" class="btn btn-sm" style="background: #ffe3e0; border-color: #f5b9b0;" @click="removeMember(member.id)">移除</button>
+            </div>
+          </div>
+          <div class="flex" style="margin-top: 12px;" v-if="isLeader">
+            <input v-model="newMemberName" placeholder="新团员姓名" style="flex:2;" />
+            <button class="btn btn-sm btn-primary" @click="addMember">添加成员</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 双列布局：投票 + 物资认领 -->
+      <div class="grid-2">
+        <!-- 投票区 -->
+        <div class="card">
+          <div class="card-title"><span>🗳️ 目的地 & 时间投票</span></div>
+          <div>
+            <div style="font-weight: 600; margin-bottom: 6px;">📍 目的地</div>
+            <div class="flex" style="margin-bottom: 10px;">
+              <input v-model="newDestinationOption" placeholder="添加目的地选项" style="flex:2;" />
+              <button class="btn btn-sm" @click="addDestinationOption">添加</button>
+            </div>
+            <div v-for="opt in destinationOptions" :key="opt.id" class="flex-between" style="margin-bottom: 6px;">
+              <span>{{ opt.text }}</span>
+              <div class="flex">
+                <span class="tag">{{ getVotesCount('destination', opt.id) }} 票</span>
+                <button class="btn btn-sm" @click="vote('destination', opt.id)">投票</button>
+              </div>
+            </div>
+            <!-- 图表 -->
+            <div ref="destinationChart" class="chart-container"></div>
+          </div>
+          <div style="margin-top: 20px;">
+            <div style="font-weight: 600; margin-bottom: 6px;">📅 出行时间</div>
+            <div class="flex" style="margin-bottom: 10px;">
+              <input v-model="newTimeOption" placeholder="例如：6.15-6.20" style="flex:2;" />
+              <button class="btn btn-sm" @click="addTimeOption">添加</button>
+            </div>
+            <div v-for="opt in timeOptions" :key="opt.id" class="flex-between" style="margin-bottom: 6px;">
+              <span>{{ opt.text }}</span>
+              <div class="flex">
+                <span class="tag">{{ getVotesCount('time', opt.id) }} 票</span>
+                <button class="btn btn-sm" @click="vote('time', opt.id)">投票</button>
+              </div>
+            </div>
+            <div ref="timeChart" class="chart-container"></div>
+          </div>
+        </div>
+
+        <!-- 物资认领清单 -->
+        <div class="card">
+          <div class="card-title"><span>🧳 物资认领</span></div>
+          <div class="flex" style="margin-bottom: 12px;">
+            <input v-model="newSupplyItem" placeholder="物品名称 (如：急救包)" style="flex:2;" />
+            <button class="btn btn-sm btn-primary" @click="addSupply">添加</button>
+          </div>
+          <div v-for="item in supplyList" :key="item.id" class="flex-between" style="padding: 8px 0; border-bottom: 1px solid #d8efe6;">
+            <div>
+              <span style="font-weight: 500;">{{ item.name }}</span>
+              <span v-if="item.claimedBy" class="tag" style="margin-left: 8px; background: #b8e0d0;">{{ item.claimedBy }}</span>
+            </div>
+            <button v-if="!item.claimedBy" class="btn btn-sm" @click="claimSupply(item.id)">认领</button>
+            <button v-else-if="item.claimedBy === currentUser.name" class="btn btn-sm" style="background: #ffe0db;" @click="unclaimSupply(item.id)">取消</button>
+            <span v-else style="font-size: 0.75rem; color: #6a8e7f;">已被认领</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 行程看板 + 导出PDF (简易打印) -->
+      <div class="card">
+        <div class="flex-between">
+          <div class="card-title"><span>📋 行程看板</span></div>
+          <button class="btn btn-sm" @click="exportPDF">导出PDF行程</button>
+        </div>
+        <div v-for="(day, index) in itinerary" :key="index" class="itinerary-item">
+          <div class="flex-between">
+            <span style="font-weight: 700; font-size: 1rem;">Day {{ index + 1 }} · {{ day.date || '待定' }}</span>
+            <button class="btn btn-sm" style="background: #fff1e0;" @click="editItinerary(index)">编辑</button>
+          </div>
+          <p style="margin-top: 8px; white-space: pre-wrap;">{{ day.content || '点击编辑添加行程...' }}</p>
+        </div>
+        <button class="btn btn-outline" style="width: 100%; margin-top: 8px;" @click="addItineraryDay">+ 添加一天</button>
+      </div>
+
+      <!-- AA记账 + 结算清单 -->
+      <div class="card">
+        <div class="card-title"><span>💰 AA记账 & 结算</span></div>
+        <!-- 添加消费 -->
+        <div class="grid-2" style="margin-bottom: 16px;">
+          <input v-model="expenseDesc" placeholder="消费描述 (如：民宿)" />
+          <input v-model.number="expenseAmount" type="number" placeholder="金额 (元)" />
+          <select v-model="expensePayer">
+            <option disabled value="">选择垫付人</option>
+            <option v-for="m in currentGroup.members" :value="m.name">{{ m.name }}</option>
+          </select>
+          <div class="flex">
+            <input type="file" ref="receiptInput" accept="image/*" style="display: none;" @change="handleReceiptUpload" />
+            <button class="btn btn-sm" @click="$refs.receiptInput.click()">📎 上传小票</button>
+            <span v-if="receiptPreview" style="font-size: 0.8rem; color: #2b7a62;">已选择</span>
+            <button class="btn btn-sm btn-primary" @click="addExpense">记一笔</button>
+          </div>
+          <div v-if="receiptPreview" style="margin-top: 8px;">
+            <img :src="receiptPreview" class="receipt-preview" />
+          </div>
+        </div>
+
+        <!-- 消费列表 -->
+        <div style="max-height: 200px; overflow-y: auto; margin-bottom: 16px;">
+          <div v-for="(exp, idx) in expenses" :key="exp.id" class="flex-between" style="padding: 8px 0; border-bottom: 1px solid #d8efe6;">
+            <div>
+              <span style="font-weight: 600;">{{ exp.desc }}</span> · {{ exp.amount }}元 
+              <span class="tag">垫付: {{ exp.payer }}</span>
+              <img v-if="exp.receipt" :src="exp.receipt" style="width: 30px; height: 30px; border-radius: 8px; margin-left: 8px; vertical-align: middle;" />
+            </div>
+            <button class="btn btn-sm" style="background: #ffe3e0;" @click="removeExpense(idx)">删除</button>
+          </div>
+        </div>
+
+        <!-- 结算清单 -->
+        <div style="background: #e3f3ed; border-radius: 24px; padding: 16px;">
+          <div style="font-weight: 700; margin-bottom: 8px;">🧾 结算清单</div>
+          <div v-if="settlements.length === 0">暂无消费，无需结算</div>
+          <div v-for="s in settlements" :key="s.name" class="flex-between" style="margin-bottom: 6px;">
+            <span>{{ s.name }}</span>
+            <span :style="{ color: s.amount >= 0 ? '#2b7a62' : '#b13e3e', fontWeight: 600 }">
+              {{ s.amount >= 0 ? '应收回' : '应支付' }} {{ Math.abs(s.amount).toFixed(2) }} 元
+            </span>
+          </div>
+          <div style="font-size: 0.7rem; color: #5f7e71; margin-top: 8px;">* 根据垫付记录自动均摊</div>
+        </div>
+      </div>
+    </template>
+
+    <!-- 个人中心弹窗 (消息+简易设置) -->
+    <div v-if="showProfileModal" class="card" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 400px; z-index: 1000; box-shadow: 0 30px 40px rgba(0,0,0,0.2);">
+      <div class="flex-between">
+        <div class="card-title"><span>👤 个人中心</span></div>
+        <button class="btn btn-sm" @click="showProfileModal = false">关闭</button>
+      </div>
+      <div style="margin: 12px 0;">
+        <div class="flex" style="gap: 10px; margin-bottom: 16px;">
+          <div class="avatar" style="width: 48px; height: 48px; font-size: 1.2rem;">{{ currentUser.avatar }}</div>
+          <div>
+            <div style="font-weight: 700; font-size: 1.2rem;">{{ currentUser.name }}</div>
+            <div style="font-size: 0.8rem; color: #6a8e7f;">ID: {{ currentUser.id }}</div>
+          </div>
+        </div>
+        <div style="font-weight: 600; margin-bottom: 8px;">📨 消息提醒</div>
+        <div v-if="messages.length === 0" style="font-size: 0.9rem; color: #6a8e7f;">暂无新消息</div>
+        <div v-for="(msg, idx) in messages" :key="idx" style="background: #f4fbf8; border-radius: 16px; padding: 10px; margin-bottom: 6px; font-size: 0.85rem;">
+          {{ msg }}
+        </div>
+        <button class="btn btn-sm" style="margin-top: 8px;" @click="clearMessages">清空消息</button>
+      </div>
+      <div style="font-size: 0.8rem; color: #5f7e71; text-align: center;">毕业快乐 · 友谊长存</div>
+    </div>
+    <div v-if="showProfileModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.2); backdrop-filter: blur(4px); z-index: 999;" @click="showProfileModal = false"></div>
+
+    <!-- 编辑行程弹窗 (简易 prompt 替代)  使用 window.prompt 简化, 但为了体验保留, 在方法中实现 -->
+  </div>
+
+  <script>
+    const { createApp, ref, reactive, computed, onMounted, nextTick, watch } = Vue;
+
+    const app = createApp({
+      setup() {
+        // ---------- 全局状态 ----------
+        const currentUser = reactive({
+          id: 'user_' + Math.random().toString(36).substr(2, 6),
+          name: '旅行者' + Math.floor(Math.random() * 100),
+          avatar: '🎒'
+        });
+
+        const currentGroup = ref(null); // { id, name, inviteCode, members: [], leaderId }
+        const newGroupName = ref('');
+        const joinCodeInput = ref('');
+        const newMemberName = ref('');
+        const showProfileModal = ref(false);
+
+        // 消息系统
+        const messages = ref([]);
+        const unreadMessages = computed(() => messages.value.length);
+
+        // 投票数据
+        const destinationOptions = ref([
+          { id: 'd1', text: '厦门' },
+          { id: 'd2', text: '成都' },
+          { id: 'd3', text: '西安' },
+        ]);
+        const timeOptions = ref([
+          { id: 't1', text: '6.15 - 6.20' },
+          { id: 't2', text: '6.22 - 6.27' },
+          { id: 't3', text: '7.1 - 7.6' },
+        ]);
+        const newDestinationOption = ref('');
+        const newTimeOption = ref('');
+        // 投票存储: { type: { optionId: [userIds] } }
+        const votes = reactive({
+          destination: {},
+          time: {}
+        });
+
+        // 物资认领
+        const supplyList = ref([
+          { id: 's1', name: '急救包', claimedBy: null },
+          { id: 's2', name: '相机', claimedBy: null },
+          { id: 's3', name: '零食大礼包', claimedBy: null },
+        ]);
+        const newSupplyItem = ref('');
+
+        // 行程看板
+        const itinerary = ref([
+          { date: '6.15', content: '抵达厦门，入住民宿，晚上中山路逛吃' },
+          { date: '6.16', content: '鼓浪屿一日游，打卡最美转角' }
+        ]);
+
+        // AA记账
+        const expenses = ref([]);
+        const expenseDesc = ref('');
+        const expenseAmount = ref(null);
+        const expensePayer = ref('');
+        const receiptPreview = ref(null);
+        const receiptInput = ref(null);
+
+        // 图表引用
+        const destinationChart = ref(null);
+        const timeChart = ref(null);
+        let destChartInstance = null;
+        let timeChartInstance = null;
+
+        // 结算计算
+        const settlements = computed(() => {
+          if (!currentGroup.value || expenses.value.length === 0) return [];
+          const members = currentGroup.value.members.map(m => m.name);
+          const total = expenses.value.reduce((sum, e) => sum + e.amount, 0);
+          const perPerson = total / members.length;
+          // 计算每个人垫付总额
+          const paidMap = {};
+          members.forEach(m => paidMap[m] = 0);
+          expenses.value.forEach(e => {
+            if (paidMap[e.payer] !== undefined) paidMap[e.payer] += e.amount;
+          });
+          // 每个人应收回/应支付 = 垫付 - 人均
+          return members.map(name => ({
+            name,
+            amount: paidMap[name] - perPerson
+          }));
+        });
+
+        // 是否团长
+        const isLeader = computed(() => {
+          return currentGroup.value && currentGroup.value.leaderId === currentUser.id;
+        });
+
+        // ---------- 工具函数 ----------
+        function generateInviteCode() {
+          return Math.random().toString(36).substring(2, 8).toUpperCase();
+        }
+
+        function showMessage(text) {
+          messages.value.push(text);
+          // 自动移除过时消息？保留在个人中心
+        }
+
+        // ---------- 团管理 ----------
+        function createGroup() {
+          if (!newGroupName.value.trim()) {
+            alert('请输入团名称');
+            return;
+          }
+          const inviteCode = generateInviteCode();
+          const group = {
+            id: 'group_' + Date.now(),
+            name: newGroupName.value.trim(),
+            inviteCode: inviteCode,
+            leaderId: currentUser.id,
+            members: [
+              { id: currentUser.id, name: currentUser.name, joinTime: new Date().toLocaleDateString() }
+            ]
+          };
+          currentGroup.value = group;
+          showMessage(`🎉 成功创建拼团「${group.name}」，邀请码：${inviteCode}`);
+          // 重置表单
+          newGroupName.value = '';
+        }
+
+        function joinGroup() {
+          const code = joinCodeInput.value.trim().toUpperCase();
+          if (!code) {
+            alert('请输入邀请码');
+            return;
+          }
+          // 模拟通过邀请码加入 (实际应用需后端; 这里演示: 若无团则创建一个虚拟团? 为演示方便，如果不匹配任何现成团，则创建一个以该邀请码命名的团，并让当前用户加入)
+          // 因为没有真实后端，我们这样: 如果已经存在currentGroup则不能加入; 否则创建一个新团，并把邀请码设为输入码
+          if (currentGroup.value) {
+            alert('请先退出当前团');
+            return;
+          }
+          // 模拟根据邀请码找到团 (但无后端，我们创建一个新的团，并加入)
+          const fakeGroup = {
+            id: 'group_' + Date.now(),
+            name: '拼团_' + code,
+            inviteCode: code,
+            leaderId: null, // 没有团长，第一个人加入成为团长? 根据逻辑第一个加入的是团长(若之前没团)
+            members: []
+          };
+          // 当前用户加入
+          fakeGroup.members.push({ id: currentUser.id, name: currentUser.name, joinTime: new Date().toLocaleDateString() });
+          // 设定第一个成员为团长
+          fakeGroup.leaderId = currentUser.id;
+          currentGroup.value = fakeGroup;
+          showMessage(`已加入拼团，邀请码 ${code}`);
+          joinCodeInput.value = '';
+        }
+
+        function leaveGroup() {
+          if (confirm('确定退出当前团吗？')) {
+            currentGroup.value = null;
+          }
+        }
+
+        function addMember() {
+          if (!newMemberName.value.trim()) return;
+          if (!currentGroup.value) return;
+          if (!isLeader.value) {
+            alert('只有团长可以添加成员');
+            return;
+          }
+          const newMember = {
+            id: 'member_' + Date.now(),
+            name: newMemberName.value.trim(),
+            joinTime: new Date().toLocaleDateString()
+          };
+          currentGroup.value.members.push(newMember);
+          showMessage(`团长添加了新成员：${newMember.name}`);
+          newMemberName.value = '';
+        }
+
+        function removeMember(memberId) {
+          if (!isLeader.value) return;
+          if (memberId === currentUser.id) {
+            alert('不能移除自己');
+            return;
+          }
+          currentGroup.value.members = currentGroup.value.members.filter(m => m.id !== memberId);
+          showMessage(`移除了成员`);
+        }
+
+        // ---------- 投票 ----------
+        function addDestinationOption() {
+          if (!newDestinationOption.value.trim()) return;
+          destinationOptions.value.push({
+            id: 'd_' + Date.now(),
+            text: newDestinationOption.value.trim()
+          });
+          newDestinationOption.value = '';
+        }
+
+        function addTimeOption() {
+          if (!newTimeOption.value.trim()) return;
+          timeOptions.value.push({
+            id: 't_' + Date.now(),
+            text: newTimeOption.value.trim()
+          });
+          newTimeOption.value = '';
+        }
+
+        function vote(type, optionId) {
+          if (!votes[type][optionId]) {
+            votes[type][optionId] = [];
+          }
+          const voters = votes[type][optionId];
+          if (!voters.includes(currentUser.id)) {
+            voters.push(currentUser.id);
+            showMessage(`您投票给了 ${type === 'destination' ? '目的地' : '时间'} 选项`);
+            updateCharts();
+          } else {
+            // 取消投票? 简单起见，不允许取消，只是提示
+            alert('您已投过票');
+          }
+        }
+
+        function getVotesCount(type, optionId) {
+          return votes[type][optionId]?.length || 0;
+        }
+
+        // 更新图表
+        function updateCharts() {
+          nextTick(() => {
+            // 目的地图表
+            if (destinationChart.value) {
+              if (!destChartInstance) {
+                destChartInstance = echarts.init(destinationChart.value);
+              }
+              const destData = destinationOptions.value.map(opt => ({
+                name: opt.text,
+                value: getVotesCount('destination', opt.id)
+              }));
+              destChartInstance.setOption({
+                tooltip: { trigger: 'item' },
+                series: [{
+                  type: 'pie',
+                  radius: ['40%', '70%'],
+                  data: destData,
+                  itemStyle: { borderRadius: 8, borderColor: '#fff', borderWidth: 2 },
+                  label: { show: true, formatter: '{b}: {c}票' }
+                }],
+                color: ['#2b7a62', '#4f9e86', '#7cc4aa', '#a8dcc9', '#c5e8db']
+              });
+            }
+            // 时间图表
+            if (timeChart.value) {
+              if (!timeChartInstance) {
+                timeChartInstance = echarts.init(timeChart.value);
+              }
+              const timeData = timeOptions.value.map(opt => ({
+                name: opt.text,
+                value: getVotesCount('time', opt.id)
+              }));
+              timeChartInstance.setOption({
+                tooltip: { trigger: 'item' },
+                series: [{
+                  type: 'pie',
+                  radius: ['40%', '70%'],
+                  data: timeData,
+                  itemStyle: { borderRadius: 8, borderColor: '#fff', borderWidth: 2 },
+                  label: { show: true, formatter: '{b}: {c}票' }
+                }],
+                color: ['#f9b83a', '#f7c56e', '#fad99c', '#fbe8c7', '#fef5e7']
+              });
+            }
+          });
+        }
+
+        // 监听选项变化自动更新图表
+        watch([destinationOptions, timeOptions, votes], () => {
+          updateCharts();
+        }, { deep: true });
+
+        // ---------- 物资认领 ----------
+        function addSupply() {
+          if (!newSupplyItem.value.trim()) return;
+          supplyList.value.push({
+            id: 'supply_' + Date.now(),
+            name: newSupplyItem.value.trim(),
+            claimedBy: null
+          });
+          newSupplyItem.value = '';
+        }
+
+        function claimSupply(id) {
+          const item = supplyList.value.find(i => i.id === id);
+          if (item && !item.claimedBy) {
+            item.claimedBy = currentUser.name;
+            showMessage(`您认领了 ${item.name}`);
+          }
+        }
+
+        function unclaimSupply(id) {
+          const item = supplyList.value.find(i => i.id === id);
+          if (item && item.claimedBy === currentUser.name) {
+            item.claimedBy = null;
+          }
+        }
+
+        // ---------- 行程编辑与导出 ----------
+        function editItinerary(index) {
+          const day = itinerary.value[index];
+          const newContent = prompt('编辑行程内容', day.content);
+          if (newContent !== null) {
+            day.content = newContent;
+          }
+          const newDate = prompt('编辑日期 (如 6.15)', day.date);
+          if (newDate !== null) {
+            day.date = newDate;
+          }
+        }
+
+        function addItineraryDay() {
+          itinerary.value.push({ date: '', content: '' });
+        }
+
+        // 简易导出PDF (使用浏览器打印)
+        function exportPDF() {
+          const printWindow = window.open('', '_blank');
+          if (!printWindow) {
+            alert('请允许弹出窗口以导出PDF');
+            return;
+          }
+          const groupName = currentGroup.value?.name || '毕业旅行';
+          const itineraryHtml = itinerary.value.map((day, idx) =>
+            `<div style="margin-bottom:20px; border-left:4px solid #2b7a62; padding-left:16px;">
+              <h3>Day ${idx+1} · ${day.date || '待定'}</h3>
+              <p>${day.content.replace(/\n/g, '<br>')}</p>
+            </div>`
+          ).join('');
+          printWindow.document.write(`
+            <html><head><title>${groupName} 行程单</title>
+            <style>body{font-family:'Quicksand',sans-serif; padding:40px; color:#1e4a3a;} h1{color:#2b7a62;}</style>
+            </head><body>
+            <h1>🎓 ${groupName} 行程计划</h1>
+            <p>邀请码：${currentGroup.value?.inviteCode}</p>
+            ${itineraryHtml}
+            <p style="margin-top:40px; color:#6a8e7f;">—— 毕业旅行，友谊长存 ——</p>
+            </body></html>
+          `);
+          printWindow.document.close();
+          printWindow.print();
+        }
+
+        // ---------- AA记账 ----------
+        function handleReceiptUpload(e) {
+          const file = e.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+              receiptPreview.value = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+          }
+        }
+
+        function addExpense() {
+          if (!expenseDesc.value.trim() || !expenseAmount.value || !expensePayer.value) {
+            alert('请填写完整消费信息');
+            return;
+          }
+          if (!currentGroup.value) return;
+          expenses.value.push({
+            id: 'exp_' + Date.now(),
+            desc: expenseDesc.value.trim(),
+            amount: expenseAmount.value,
+            payer: expensePayer.value,
+            receipt: receiptPreview.value
+          });
+          showMessage(`记录消费：${expenseDesc.value} ${expenseAmount.value}元 (垫付：${expensePayer.value})`);
+          // 重置
+          expenseDesc.value = '';
+          expenseAmount.value = null;
+          expensePayer.value = '';
+          receiptPreview.value = null;
+          if (receiptInput.value) receiptInput.value.value = '';
+        }
+
+        function removeExpense(index) {
+          expenses.value.splice(index, 1);
+        }
+
+        // ---------- 消息清理 ----------
+        function clearMessages() {
+          messages.value = [];
+        }
+
+        // 初始更新图表
+        onMounted(() => {
+          setTimeout(() => {
+            updateCharts();
+          }, 300);
+        });
+
+        // 监听currentGroup变化重置图表
+        watch(currentGroup, (newVal) => {
+          if (newVal) {
+            setTimeout(() => updateCharts(), 300);
+          } else {
+            // 清理图表实例
+            if (destChartInstance) {
+              destChartInstance.dispose();
+              destChartInstance = null;
+            }
+            if (timeChartInstance) {
+              timeChartInstance.dispose();
+              timeChartInstance = null;
+            }
+          }
+        });
+
+        return {
+          currentUser,
+          currentGroup,
+          newGroupName,
+          joinCodeInput,
+          newMemberName,
+          showProfileModal,
+          messages,
+          unreadMessages,
+          destinationOptions,
+          timeOptions,
+          newDestinationOption,
+          newTimeOption,
+          supplyList,
+          newSupplyItem,
+          itinerary,
+          expenses,
+          expenseDesc,
+          expenseAmount,
+          expensePayer,
+          receiptPreview,
+          receiptInput,
+          destinationChart,
+          timeChart,
+          isLeader,
+          settlements,
+          // 方法
+          createGroup,
+          joinGroup,
+          leaveGroup,
+          addMember,
+          removeMember,
+          addDestinationOption,
+          addTimeOption,
+          vote,
+          getVotesCount,
+          addSupply,
+          claimSupply,
+          unclaimSupply,
+          editItinerary,
+          addItineraryDay,
+          exportPDF,
+          handleReceiptUpload,
+          addExpense,
+          removeExpense,
+          clearMessages,
+          updateCharts,
+        };
+      }
+    });
+
+    app.mount('#app');
+  </script>
+</body>
+</html>
